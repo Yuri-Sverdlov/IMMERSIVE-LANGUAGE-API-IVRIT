@@ -271,8 +271,14 @@ class ViewMissions extends HTMLElement {
     this.renderMissions();
 
     // Restore language preference
-    const savedLang = localStorage.getItem('immergo_language');
-    const savedFromLang = localStorage.getItem('immergo_from_language');
+    let savedLang = localStorage.getItem('immergo_language');
+    let savedFromLang = localStorage.getItem('immergo_from_language');
+
+    // Migrate stale upstream default (French) from early visits / old localStorage
+    if (savedLang && savedLang.includes('French')) {
+      localStorage.removeItem('immergo_language');
+      savedLang = null;
+    }
 
     const toSelect = this.querySelector('#to-lang');
     const fromSelect = this.querySelector('#from-lang');
@@ -280,20 +286,20 @@ class ViewMissions extends HTMLElement {
     if (savedLang) {
       toSelect.value = savedLang;
     } else {
-      // Default practice to French if first time to avoid English/English default
       const options = Array.from(toSelect.options);
       const hebrewOption = options.find(o => o.text.includes('Hebrew'));
       if (hebrewOption) toSelect.value = hebrewOption.text;
+      localStorage.setItem('immergo_language', toSelect.value);
     }
 
-    // Default From language to English if not set
+    // Default From language to Russian if not set
     if (savedFromLang) {
       fromSelect.value = savedFromLang;
     } else {
-      // Try to find English
       const options = Array.from(fromSelect.options);
       const russianOption = options.find(o => o.text.includes('Russian'));
       if (russianOption) fromSelect.value = russianOption.text;
+      localStorage.setItem('immergo_from_language', fromSelect.value);
     }
 
 

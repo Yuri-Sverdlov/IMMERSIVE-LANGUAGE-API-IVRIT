@@ -508,8 +508,12 @@ class ViewChat extends HTMLElement {
 
         try {
           // 0. Configure System Instructions
-          const language = this._language || "French";
-          const fromLanguage = this._fromLanguage || "English";
+          const language = this._language
+            || localStorage.getItem('immergo_language')
+            || "\uD83C\uDDEE\uD83C\uDDF1 Hebrew";
+          const fromLanguage = this._fromLanguage
+            || localStorage.getItem('immergo_from_language')
+            || "\uD83C\uDDF7\uD83C\uDDFA Russian";
           const mode = this._mode || "immergo_immersive";
           const missionTitle = this._mission
             ? this._mission.title

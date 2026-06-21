@@ -50,6 +50,12 @@ npm run dev
 Открыть **http://localhost:5173/**. Дефолты: «I speak» = Russian, «I want to learn» = Hebrew.
 Выбрать миссию, разрешить микрофон, говорить — ИИ отвечает голосом на иврите.
 
+### Быстрый запуск (Windows)
+
+После установки можно просто дважды щёлкнуть **`start-immergo.bat`** в корне проекта:
+откроются два окна терминала (backend + frontend) и браузер на `http://localhost:5173/`.
+Расход токенов смотреть в окне **Immergo Backend** (строки `[TOKENS] ...`).
+
 ## Что уже зашито в этот форк (отличия от апстрима)
 
 - Бэкенд работает по `GEMINI_API_KEY` (`genai.Client(api_key=...)`), модель `gemini-3.1-flash-live-preview`.
