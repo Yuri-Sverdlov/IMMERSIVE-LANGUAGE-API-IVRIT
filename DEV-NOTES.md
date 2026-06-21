@@ -5,7 +5,7 @@
 > одному проекту. **Документ растёт** — добавляй новые пункты снизу.
 >
 > Расположение: `G:\_My_Programming\DEV-NOTES.md`
-> Обновлено: 2026-06-19 (добавлен п.6: Markdown -> Word через pandoc)
+> Обновлено: 2026-06-21 (добавлен п.7: Gemini Live API + грабли .env/cp1252 на Windows)
 
 ---
 
@@ -124,6 +124,49 @@
 - **Проверка результата** (python-docx): число paragraphs/tables/headings.
   `python -m pip install python-docx -q` затем читать `Document(file)`.
 - На этом ПК нет MS Word (COM недоступен) и не было pandoc до 2026-06-19 — теперь pandoc стоит.
+
+---
+
+## 7. Gemini Live API (голосовой ИИ) + грабли .env/кодировки на Windows
+
+Опыт проекта IMMERSIVE-LANGUAGE-API (форк Immergo, иммерсивный иврит). Полезно для любого
+проекта на Gemini Live API / google-genai на этом ПК.
+
+**7.1. Vertex AI vs Gemini Developer API (ключ).** `google-genai` умеет оба режима одним SDK:
+- Vertex: `genai.Client(vertexai=True, project=..., location=...)` — требует GCP-проект, billing,
+  `gcloud auth application-default login`. Бюрократия.
+- Developer API: `genai.Client(api_key=...)` — один ключ из https://aistudio.google.com, без GCP.
+  Для личных проектов проще. Нейросеть та же; отличается только вход/оплата/квоты.
+- Ключ нового формата AI Studio начинается с `AQ.A...` (классические были `AIza...`).
+
+**7.2. Имя live-модели зависит от режима.** На developer-API актуальна `gemini-3.1-flash-live-preview`.
+Vertex-имя `gemini-live-2.5-flash-native-audio` на developer-API устарело/не то. Модель задаётся
+на сервере (`client.aio.live.connect(model=...)`), не на фронте.
+
+**7.3. Поле `proactivity` не принимается developer-API.** Конфиг с `proactivity` (proactive audio)
+валиден для Vertex, но на developer-API даёт `1007 Invalid JSON ... Unknown name "proactivity" at 'setup'`
+и рвёт WebSocket -> голоса нет. Лечение: не слать это поле в setup. (Если Google отвергает ещё
+какое-то поле — тот же `1007 Unknown name "X"`, убрать X аналогично.) На разговор proactivity не влияет.
+
+**7.4. .env ДОЛЖЕН быть ASCII (Windows).** `starlette.Config(env_file=".env")` читает файл в кодировке
+cp1252 -> кириллический комментарий в `.env` даёт `UnicodeDecodeError: 'charmap' ... byte 0x81` при
+старте сервера. Правило: в `.env` и `.env.example` — только ASCII (комментарии по-английски).
+Важно: `sys.stdout.reconfigure(utf-8)` тут НЕ спасает (он про вывод, а не про чтение env-файла при импорте).
+
+**7.5. Эмодзи в print() стороннего кода (расширение п.4).** Многие Google/чужие модули печатают эмодзи
+(`⚡️`,`🔧`,`💰`) в `print()`. На cp1252-консоли это `UnicodeEncodeError`, который может уронить
+рабочий поток (напр. live-сессию). Не правя десятки print, лечится в начале своего main-модуля:
+```python
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+```
+(или запуск с `PYTHONUTF8=1`). Это влияет только на вывод; данные/файлы не трогаем.
+
+**7.6. Лимит длительности сессии.** В Immergo сессия жёстко обрывается по `SESSION_TIME_LIMIT`
+(env, default 180с) через `asyncio.wait_for(run_session(), timeout=...)`. Это «обрыв по таймеру»,
+а НЕ по токенам (лимита токенов в коде нет — он на стороне Google/квоты ключа). Расход токенов виден
+только если включить логирование `response.usage_metadata` (печатает строку с числом токенов в консоль сервера).
 
 ---
 

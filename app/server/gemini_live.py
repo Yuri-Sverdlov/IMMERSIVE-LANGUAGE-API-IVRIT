@@ -156,9 +156,11 @@ class GeminiLive:
                             
                             if server_content:
 
-                                # uncomment for token usage
-                                # if response.usage_metadata:
-                                #     print("💰 Usage metadata:", response.usage_metadata)
+                                if response.usage_metadata:
+                                    um = response.usage_metadata
+                                    print(f"[TOKENS] total={getattr(um, 'total_token_count', None)} "
+                                          f"prompt={getattr(um, 'prompt_token_count', None)} "
+                                          f"response={getattr(um, 'response_token_count', None)}")
 
                                 if server_content.model_turn:
                                     for part in server_content.model_turn.parts:

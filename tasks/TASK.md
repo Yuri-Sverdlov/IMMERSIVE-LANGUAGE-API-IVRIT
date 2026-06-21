@@ -2,70 +2,74 @@
 
 > Ровно ОДНО активное задание. После приёмки архивируется в `tasks/done/`.
 
-## Заголовок (задание 004 — ИСКЛЮЧЕНИЕ: git-задание)
+## Заголовок (задание 005)
 
-Инициализировать git в КОРНЕ проекта и запушить всё в репозиторий пользователя на GitHub.
+Включить логирование расхода токенов в консоль + закоммитить накопленные правки (ASCII-фикс .env.example, DEV-NOTES, 7-мин лимит уже в .env).
 
 ## Контекст
 
-Это **явное git-задание** — тебе РАЗРЕШено commit/push (обычный запрет снят только для этой задачи).
-Remote (HTTPS): `https://github.com/Yuri-Sverdlov/IMMERSIVE-LANGUAGE-API-IVRIT.git` (репозиторий пустой).
-Архитектор уже подготовил: убран чужой `app/.git`, создан корневой `.gitignore`, `DEPLOY.md`,
-обновлён `app/.env.example`. Работаем из КОРНЯ проекта (`G:\___Planning_Life_Sphere\IVRIT\IMMERSIVE-LANGUAGE-API`).
+Пользователь хочет видеть расход токенов Live API в логе бэкенда (в терминале, не в браузере).
+Сейчас логирование закомментировано в `app/server/gemini_live.py`. Также в репозитории есть
+накопленные НЕзакоммиченные правки от архитектора, их надо отправить на GitHub.
+Это **git-задание** — commit/push РАЗРЕШён (разовое исключение). Работаем из корня и из `app/`.
+Среда Windows, файлы UTF-8, но в консольный вывод (print) — ТОЛЬКО ASCII (cp1252; см. DEV-NOTES п.4/7).
+
+## Что сделать
+
+### Этап 1. Включить логирование токенов — `app/server/gemini_live.py`
+Найти закомментированный блок в `receive_loop` (примерно):
+```python
+# uncomment for token usage
+# if response.usage_metadata:
+#     print("💰 Usage metadata:", response.usage_metadata)
+```
+Заменить его на РАБОЧИЙ, но с **ASCII-выводом** (без эмодзи, чтобы гарантированно не упасть):
+```python
+if response.usage_metadata:
+    um = response.usage_metadata
+    print(f"[TOKENS] total={getattr(um, 'total_token_count', None)} "
+          f"prompt={getattr(um, 'prompt_token_count', None)} "
+          f"response={getattr(um, 'response_token_count', None)}")
+```
+(Если поля называются иначе в установленной версии SDK — взять реально существующие из `usage_metadata`,
+зафиксировать фактические имена в REPORT.)
+
+### Этап 2. Проверить, что бэкенд стартует и логирует
+1. Из `app/`: `.\venv\Scripts\Activate.ps1` затем `python -m uvicorn server.main:app --host 0.0.0.0 --port 8000`.
+2. Backend должен стартовать (порт 8000). `GET /api/status` = 200.
+3. Если есть возможность — кратко проверить, что при сессии в логе появляется строка `[TOKENS] ...`
+   (полноценный голосовой тест сделает пользователь). После проверки backend можно остановить.
+
+### Этап 3. Коммит и пуш накопленных правок
+Закоммитить и запушить в `origin/main` следующие изменения (они уже на диске или из этапа 1):
+- `app/server/gemini_live.py` (логирование токенов, этап 1);
+- `app/.env.example` (комментарии переведены в ASCII + добавлен `SESSION_TIME_LIMIT`);
+- `DEV-NOTES.md` (добавлен п.7).
+Шаги:
+```
+git add -A
+git status
+git ls-files | Select-String -Pattern "\.env"   # СТРАЖ: должно быть только app/.env.example
+git commit -m "Логи токенов в консоль; ASCII-фикс .env.example; DEV-NOTES п.7"
+git push origin main
+git ls-remote origin refs/heads/main             # сверить хэш с git rev-parse HEAD
+```
 
 ## ГЛАВНОЕ ПРАВИЛО БЕЗОПАСНОСТИ
 
-**Ключ `GEMINI_API_KEY` (файл `app/.env`) НЕ должен попасть в коммит.** Перед коммитом обязательно
-проверить, что `.env` не застейджен. Если `.env` виден в `git status`/`git ls-files` — СТОП, сообщить архитектору.
+`app/.env` (с ключом `GEMINI_API_KEY`) **НЕ коммитить.** Перед коммитом проверить стражем
+(`git ls-files | Select-String "\.env"` -> только `.env.example`). Если виден `app/.env` -> СТОП, сообщить.
 
-## Что сделать (по шагам, из корня проекта)
+## Критерии приёмки (DoD)
 
-1. Инициализировать репозиторий и ветку main:
-   ```
-   git init
-   git branch -M main
-   git remote add origin https://github.com/Yuri-Sverdlov/IMMERSIVE-LANGUAGE-API-IVRIT.git
-   ```
-2. Добавить файлы и проверить, что секрет НЕ попал:
-   ```
-   git add -A
-   git status
-   ```
-   Затем проверка-страж (должно вернуть ТОЛЬКО `.env.example`, НЕ `app/.env`):
-   ```
-   git ls-files | Select-String -Pattern "\.env"
-   ```
-   - Если в списке есть `app/.env` (без `.example`) -> `git rm --cached app/.env`, перепроверить, и только потом дальше.
-   - Дополнительно убедиться, что `app/node_modules/`, `app/venv/`, `app/dist/` НЕ застейджены.
-3. Коммит (сообщение через HEREDOC-стиль или одной строкой):
-   ```
-   git commit -m "Initial commit: Immergo, настроенный на иврит (родной русский), на Gemini API key"
-   ```
-4. Запушить:
-   ```
-   git push -u origin main
-   ```
-   - Remote по HTTPS -> нужен Personal Access Token в Windows Credential Manager (НЕ SSH-ключ).
-     Если push требует логин/падает на авторизации -> сообщить архитектору «нужен PAT», НЕ выдумывать креды.
-5. Проверка, что долетело:
-   ```
-   git ls-remote origin refs/heads/main
-   ```
-   (должен вернуться хэш, совпадающий с локальным `git rev-parse HEAD`).
-
-## Критерии приёмки (Definition of Done)
-
-- [ ] В корне инициализирован git, remote = репозиторий пользователя, ветка `main`.
-- [ ] `git ls-files` НЕ содержит `app/.env` (только `app/.env.example`); node_modules/venv/dist не в индексе.
-- [ ] Коммит создан, `git push -u origin main` успешен.
-- [ ] `git ls-remote origin refs/heads/main` возвращает хэш = локальному `HEAD`.
-- [ ] В REPORT указать: хэш коммита, число файлов, результат проверки `.env`.
+- [ ] В `gemini_live.py` логирование токенов раскомментировано, вывод ASCII (`[TOKENS] ...`).
+- [ ] Backend стартует, `/api/status` = 200; (по возможности) в логе видна строка `[TOKENS]`.
+- [ ] Коммит создан и запушен; `git ls-remote origin refs/heads/main` = локальному `HEAD`.
+- [ ] Страж подтвердил: `app/.env` НЕ в индексе (только `.env.example`).
+- [ ] В REPORT: новый хэш коммита, фактические имена полей usage_metadata.
 
 ## Ограничения
 
-- Это разовое git-разрешение. Менять git config НЕ нужно. force-push НЕ делать.
-- Если что-то про безопасность ключа неясно — остановиться и спросить архитектора.
-
-## Как проверить
-
-- `git ls-remote origin refs/heads/main` (хэш) и отсутствие `app/.env` в `git ls-files`.
+- Scope: только логирование токенов + коммит указанных файлов. Не менять модель, промпты, лимиты.
+- print — ASCII; файлы — UTF-8; `.env` — ASCII (не трогать). Ключ не печатать, не коммитить.
+- force-push НЕ делать, git config НЕ менять.
