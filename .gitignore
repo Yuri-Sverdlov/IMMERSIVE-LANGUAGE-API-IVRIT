@@ -1,0 +1,40 @@
+# === Секреты — НИКОГДА не коммитить ===
+.env
+*.env
+!*.env.example
+app/.env
+
+# === Зависимости и сборка (ставятся на каждой машине заново) ===
+node_modules/
+app/node_modules/
+dist/
+dist-ssr/
+app/dist/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+app/venv/
+.pytest_cache/
+
+# === Логи / временное ===
+logs
+*.log
+npm-debug.log*
+*.local
+
+# === Редакторы / агенты / ОС ===
+.claude/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# === Деплой-скрипты с приватными данными ===
+scripts/deploy.sh
+app/scripts/deploy.sh
+deploy.sh
