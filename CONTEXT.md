@@ -6,13 +6,16 @@
 ## Проект
 
 - **Название:** IMMERSIVE-LANGUAGE-API
-- **Путь:** `G:\___Planning_Life_Sphere\IVRIT\IMMERSIVE-LANGUAGE-API`
+- **Путь:** `G:\Projects_Life_planning\IVRIT\IMMERSIVE-ROLE-PLAYING-DIALOGUES`
 - **Суть:** Иммерсивное изучение языка через голосовой роле-плей с ИИ (Google Gemini Live API).
   Берём готовый репозиторий [ZackAkil/immersive-language-learning-with-live-api](https://github.com/ZackAkil/immersive-language-learning-with-live-api)
   (приложение "Immergo") и настраиваем под наш кейс.
 - **Наш кейс:** родной язык — **русский**, язык изучения — **иврит**.
 - **Раскладка:** код приложения — в подпапке `app/` (клон репо). Оркестрация
   (AGENTS/CONTEXT/PROJECT_LOG/tasks/DEV-NOTES) — в корне проекта.
+- **Облако (опционально):** Cloud Run в GCP-проекте `immergo-hebrew` (сервис `immergo`,
+  регион `us-central1`). URL: https://immergo-581555965916.us-central1.run.app
+  Развёртывание и управление — см. `ОБЛАКО-Immergo-инструкция.md`.
 
 ## Стек (из апстрим-репо)
 
@@ -28,7 +31,7 @@
 ## Где настраивается язык (ключевое)
 
 - `app/src/components/view-missions.js` — жёстко заданный список языков (`options`) и
-  дефолты: "I speak" (from) и "I want to learn" (to). **Иврита в списке нет — добавляем.**
+  дефолты: "I speak" (from) и "I want to learn" (to). Иврит и русский уже в списке и установлены как дефолты.
 - Значение языка = текст выбранной опции; оно прокидывается в системный промпт Gemini.
 - Системный промпт собирается на фронте (`app/src/components/view-chat.js`),
   бэкенд (`server/gemini_live.py`) его только передаёт в Live API.
