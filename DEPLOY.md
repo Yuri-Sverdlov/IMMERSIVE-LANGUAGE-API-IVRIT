@@ -1,5 +1,7 @@
 # DEPLOY — развёртывание на другом компьютере
 
+> После установки для **ежедневного использования** см. **`QUICK_START.md`** (что нажимать в интерфейсе).
+
 Иммерсивное изучение иврита (родной — русский) на базе Immergo
 ([апстрим](https://github.com/ZackAkil/immersive-language-learning-with-live-api)),
 переключённого на **Gemini Developer API** (ключ из Google AI Studio, без Google Cloud/Vertex).
