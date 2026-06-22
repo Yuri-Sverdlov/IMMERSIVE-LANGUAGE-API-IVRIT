@@ -1,0 +1,6 @@
+{
+  "native_language": "Russian",
+  "target_language": "Hebrew",
+  "session_time_limit_seconds": 420,
+  "silence_duration_ms": 2000
+}

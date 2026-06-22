@@ -39,7 +39,7 @@ from server.recaptcha_validator import RecaptchaValidator
 from server.gemini_live import GeminiLive
 from server.fingerprint import generate_fingerprint
 from server.simple_tracker import simpletrack
-from server.config_utils import get_project_id
+from server.config_utils import get_project_id, load_immergo_config
 
 
 # Rate Limiting
@@ -62,14 +62,17 @@ PROJECT_ID = get_project_id()
 LOCATION = os.getenv("LOCATION", "us-central1")
 MODEL = os.getenv("MODEL", "gemini-3.1-flash-live-preview")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-# Use a very long timeout for dev
-SESSION_TIME_LIMIT = int(os.getenv("SESSION_TIME_LIMIT", "180"))
 RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
 RECAPTCHA_SCORE_THRESHOLD = float(os.getenv("RECAPTCHA_SCORE_THRESHOLD", "0.5"))
 REDIS_URL = os.getenv("REDIS_URL")
 GLOBAL_RATE_LIMIT = os.getenv("GLOBAL_RATE_LIMIT", "1000 per hour")
 PER_USER_RATE_LIMIT = os.getenv("PER_USER_RATE_LIMIT", "2 per minute")
 DEV_MODE = os.getenv("DEV_MODE", "true") == "true"
+
+# Load immergo.config.json
+IMMERGO_CONFIG = load_immergo_config()
+# SESSION_TIME_LIMIT: config overrides .env, .env is fallback
+SESSION_TIME_LIMIT = IMMERGO_CONFIG.get("session_time_limit_seconds", int(os.getenv("SESSION_TIME_LIMIT", "180")))
 
 # Initialize FastAPI
 app = FastAPI()
@@ -150,12 +153,22 @@ async def get_status():
         missing.append("recaptcha")
     if not REDIS_URL:
         missing.append("redis")
-    
+
     mode = "simple" if missing else "production"
-    
+
     return {
         "mode": mode,
         "missing": missing
+    }
+
+@app.get("/api/config")
+async def get_config():
+    """Returns the immergo configuration (without secrets)."""
+    return {
+        "native_language": IMMERGO_CONFIG.get("native_language", "Russian"),
+        "target_language": IMMERGO_CONFIG.get("target_language", "Hebrew"),
+        "session_time_limit_seconds": SESSION_TIME_LIMIT,
+        "silence_duration_ms": IMMERGO_CONFIG.get("silence_duration_ms", 2000)
     }
 
 @app.get("/{full_path:path}")

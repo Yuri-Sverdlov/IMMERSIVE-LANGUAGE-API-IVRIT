@@ -207,6 +207,11 @@ export class GeminiLiveAPI {
     this.voiceName = voiceName;
   }
 
+  setSilenceDurationMs(durationMs) {
+    console.log("setting silence duration: ", durationMs, "ms");
+    this.automaticActivityDetection.silence_duration_ms = durationMs;
+  }
+
   setProactivity(proactivity) {
     console.log("setting proactivity: ", proactivity);
     this.proactivity = proactivity;

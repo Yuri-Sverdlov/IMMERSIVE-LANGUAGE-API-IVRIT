@@ -14,6 +14,8 @@
 
 import os
 import logging
+import json
+from pathlib import Path
 import google.auth
 
 logger = logging.getLogger(__name__)
@@ -38,3 +40,35 @@ def get_project_id():
 
     # 3. Fallback
     return "your-project-id"
+
+def load_immergo_config():
+    """
+    Load immergo.config.json from app directory.
+    Returns dict with defaults if file not found or invalid.
+    """
+    defaults = {
+        "native_language": "Russian",
+        "target_language": "Hebrew",
+        "session_time_limit_seconds": 420,
+        "silence_duration_ms": 2000
+    }
+
+    # Config file is in app/ directory (parent of server/)
+    config_path = Path(__file__).parent.parent / "immergo.config.json"
+
+    if not config_path.exists():
+        logger.info(f"Config file not found at {config_path}, using defaults")
+        return defaults
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            logger.info(f"Loaded config from {config_path}")
+            # Merge with defaults (config overrides defaults)
+            return {**defaults, **config}
+    except json.JSONDecodeError as e:
+        logger.warning(f"Invalid JSON in {config_path}: {e}. Using defaults.")
+        return defaults
+    except Exception as e:
+        logger.warning(f"Error loading config from {config_path}: {e}. Using defaults.")
+        return defaults

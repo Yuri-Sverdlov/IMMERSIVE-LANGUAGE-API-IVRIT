@@ -270,37 +270,8 @@ class ViewMissions extends HTMLElement {
 
     this.renderMissions();
 
-    // Restore language preference
-    let savedLang = localStorage.getItem('immergo_language');
-    let savedFromLang = localStorage.getItem('immergo_from_language');
-
-    // Migrate stale upstream default (French) from early visits / old localStorage
-    if (savedLang && savedLang.includes('French')) {
-      localStorage.removeItem('immergo_language');
-      savedLang = null;
-    }
-
-    const toSelect = this.querySelector('#to-lang');
-    const fromSelect = this.querySelector('#from-lang');
-
-    if (savedLang) {
-      toSelect.value = savedLang;
-    } else {
-      const options = Array.from(toSelect.options);
-      const hebrewOption = options.find(o => o.text.includes('Hebrew'));
-      if (hebrewOption) toSelect.value = hebrewOption.text;
-      localStorage.setItem('immergo_language', toSelect.value);
-    }
-
-    // Default From language to Russian if not set
-    if (savedFromLang) {
-      fromSelect.value = savedFromLang;
-    } else {
-      const options = Array.from(fromSelect.options);
-      const russianOption = options.find(o => o.text.includes('Russian'));
-      if (russianOption) fromSelect.value = russianOption.text;
-      localStorage.setItem('immergo_from_language', fromSelect.value);
-    }
+    // Restore language preference (async to load from config if needed)
+    this.initializeLanguageDefaults();
 
 
     // Mode Logic
@@ -437,6 +408,61 @@ class ViewMissions extends HTMLElement {
 
       listContainer.appendChild(card);
     });
+  }
+
+  async initializeLanguageDefaults() {
+    let savedLang = localStorage.getItem('immergo_language');
+    let savedFromLang = localStorage.getItem('immergo_from_language');
+
+    // Migrate stale upstream default (French) from early visits / old localStorage
+    if (savedLang && savedLang.includes('French')) {
+      localStorage.removeItem('immergo_language');
+      savedLang = null;
+    }
+
+    const toSelect = this.querySelector('#to-lang');
+    const fromSelect = this.querySelector('#from-lang');
+
+    // If no localStorage, fetch defaults from config
+    if (!savedLang || !savedFromLang) {
+      try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+
+        if (!savedLang) {
+          const options = Array.from(toSelect.options);
+          const targetOption = options.find(o => o.text.includes(config.target_language));
+          if (targetOption) toSelect.value = targetOption.text;
+          localStorage.setItem('immergo_language', toSelect.value);
+        }
+
+        if (!savedFromLang) {
+          const options = Array.from(fromSelect.options);
+          const nativeOption = options.find(o => o.text.includes(config.native_language));
+          if (nativeOption) fromSelect.value = nativeOption.text;
+          localStorage.setItem('immergo_from_language', fromSelect.value);
+        }
+      } catch (err) {
+        console.error('Failed to fetch config, using hardcoded defaults:', err);
+        // Fallback to hardcoded defaults
+        if (!savedLang) {
+          const options = Array.from(toSelect.options);
+          const hebrewOption = options.find(o => o.text.includes('Hebrew'));
+          if (hebrewOption) toSelect.value = hebrewOption.text;
+          localStorage.setItem('immergo_language', toSelect.value);
+        }
+        if (!savedFromLang) {
+          const options = Array.from(fromSelect.options);
+          const russianOption = options.find(o => o.text.includes('Russian'));
+          if (russianOption) fromSelect.value = russianOption.text;
+          localStorage.setItem('immergo_from_language', fromSelect.value);
+        }
+      }
+    } else {
+      // localStorage exists, use it
+      toSelect.value = savedLang;
+      fromSelect.value = savedFromLang;
+    }
   }
 }
 
