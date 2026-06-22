@@ -190,3 +190,40 @@
   (запуск через start-immergo.bat, экраны, режимы, микрофон, токены, ограничения, FAQ).
 - В `DEPLOY.md` добавлена ссылка на QUICK_START. В CONTEXT п.5 отмечен как выполненный.
 - Не закоммичено (git — по отдельному заданию пользователя).
+
+## 2026-06-22 — Слияние с локальной копией (этот ПК); приёмка sync-отчёта
+- Кто: архитектор (чат), проверка отчёта кодера на этом ПК.
+- Контекст: локальная папка `IMMERSIVE-ROLE-PLAYING-DIALOGUES` связана с GitHub-форком;
+  структура `app/` + `start-immergo.bat` на месте; push `66bd2ee` = origin/main.
+- Проверено: `[TOKENS]` в gemini_live.py; Hebrew/Russian UI; uvicorn + /api/status OK;
+  `app/.env` не в git.
+- Хвост слияния: облачные md (`КАК-ПОЛЬЗОВАТЬСЯ...`, `ОБЛАКО-Immergo...`) только в `.backup_local/` —
+  вернуть в корень (TASK-006).
+- Дальше: TASK-006 для кодера; затем фаза 2 (dual Vertex + API key) или задание 007 (config).
+
+## 2026-06-22 — Приёмка TASK-006 (облачные md + CONTEXT)
+- Кто: архитектор
+- Проверено: md в корне; CONTEXT (путь, Cloud Run, иврит); commit `12bc273` = origin/main
+- **Фаза 1 слияния ЗАКРЫТА**
+- **2026-06-22:** venv создан на ПК2; backend+frontend проверены (8000/5173 OK)
+- **2026-06-22:** пользователь подтвердил локальный запуск (ключ Gemini, голос OK)
+- **2026-06-22:** открыто TASK-007 — immergo.config.json
+
+## 2026-06-22 — Приёмка TASK-007 (immergo.config.json)
+- Кто: архитектор (чат), отчёт кодера (Claude Code CLI, ~7 мин).
+- Commit: `f60c7df` = origin/main (8 файлов).
+- Проверено независимо:
+  - `app/immergo.config.json` — RU/HE, 420s, 2000ms.
+  - `load_immergo_config()` в `config_utils.py` — merge с дефолтами, WARNING при битом JSON.
+  - `GET /api/config` → 200, поля совпадают; `POST /api/auth` → `session_time_limit: 420`.
+  - Frontend: `view-missions.js` fetch config; `view-chat.js` + `setSilenceDurationMs()` перед connect.
+  - `app/.env` не в git.
+- Вердикт: **ПРИНЯТО**. Голосовой тест VAD/языков — на пользователя (инкогнито / смена config).
+- Архив: `tasks/done/007-immergo-config/`.
+
+## 2026-06-22 — Обсуждение: скорость речи ИИ (план TASK-008)
+- Кто: архитектор + пользователь.
+- Запрос: скорость ответа **0,7 … 1,5** (1,0 = как сейчас).
+- Вывод: Gemini Live API **не экспонирует** `speaking_rate` в SpeechConfig; `silence_duration_ms` — это VAD, не темп речи.
+- Решение: поле `speech_playback_rate` в `immergo.config.json`, реализация **на клиенте** в `AudioPlayer` / playback worklet.
+- Зафиксировано в `CONTEXT.md` раздел «План TASK-008».
