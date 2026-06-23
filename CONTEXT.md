@@ -61,17 +61,20 @@
 **TASK-007 принят** (2026-06-22, commit `f60c7df`): `app/immergo.config.json`, `GET /api/config`,
 языки/VAD/session limit из config.
 
-**Активного задания нет.** Следующие кандидаты: TASK-008 (скорость воспроизведения), TASK-009
-(mission.template + HOW-TO-ADD-QUEST), фаза 2 (redeploy Cloud Run).
+**TASK-008 принят** (2026-06-23): `speech_playback_rate` 0,7–1,5 — код на диске, **commit pending** (TASK-008-GIT).
+
+**Активное задание:** TASK-008-GIT (commit/push) + TASK-009 (mission.template + HOW-TO-ADD-QUEST) — см. `tasks/TASK.md`.
 
 Запуск: `start-immergo.bat` или `DEPLOY.md` / `QUICK_START.md`.
 
 ---
 
-## План TASK-008 — скорость воспроизведения речи ИИ
+## ~~План TASK-008~~ — **сделано (2026-06-23)**
 
 > Запрос пользователя 2026-06-22: **скорость ответа ИИ в диапазоне 0,7 … 1,5**
 > (1,0 = как сейчас; меньше — медленнее, больше — быстрее).
+> Реализовано: `speech_playback_rate` в `immergo.config.json`, clamp на backend,
+> resample в `playback.worklet.js`. Архив: `tasks/done/008-speech-playback-rate/`.
 
 ### Что пользователь имеет в виду
 
@@ -113,7 +116,7 @@
 
 `app/immergo.config.json` + `/api/config`. Языки, 7 мин, VAD.
 
-### 2. Скорость воспроизведения — **TASK-008** (см. раздел выше)
+### 2. ~~Скорость воспроизведения~~ — **сделано (008)**
 
 ### 3. Шаблон и инструкция для новых квестов — **TASK-009**
 

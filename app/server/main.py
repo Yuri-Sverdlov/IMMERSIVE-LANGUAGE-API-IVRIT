@@ -168,7 +168,8 @@ async def get_config():
         "native_language": IMMERGO_CONFIG.get("native_language", "Russian"),
         "target_language": IMMERGO_CONFIG.get("target_language", "Hebrew"),
         "session_time_limit_seconds": SESSION_TIME_LIMIT,
-        "silence_duration_ms": IMMERGO_CONFIG.get("silence_duration_ms", 2000)
+        "silence_duration_ms": IMMERGO_CONFIG.get("silence_duration_ms", 2000),
+        "speech_playback_rate": IMMERGO_CONFIG.get("speech_playback_rate", 1.0)
     }
 
 @app.get("/{full_path:path}")

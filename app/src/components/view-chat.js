@@ -602,15 +602,18 @@ When the user has successfully achieved the mission objective declared in the sc
           // 1. Connect to WebSocket
           console.log("🔌 [App] Connecting to backend...");
 
-          // Fetch config and set silence duration
+          // Fetch config and set silence duration + playback rate
           try {
             const configResponse = await fetch('/api/config');
             const config = await configResponse.json();
             if (config.silence_duration_ms) {
               this.client.setSilenceDurationMs(config.silence_duration_ms);
             }
+            if (config.speech_playback_rate) {
+              this.audioPlayer.setPlaybackRate(config.speech_playback_rate);
+            }
           } catch (err) {
-            console.error("Failed to fetch config, using default silence duration:", err);
+            console.error("Failed to fetch config, using defaults:", err);
           }
 
           // Execute Recaptcha

@@ -50,7 +50,8 @@ def load_immergo_config():
         "native_language": "Russian",
         "target_language": "Hebrew",
         "session_time_limit_seconds": 420,
-        "silence_duration_ms": 2000
+        "silence_duration_ms": 2000,
+        "speech_playback_rate": 1.0
     }
 
     # Config file is in app/ directory (parent of server/)
@@ -65,7 +66,18 @@ def load_immergo_config():
             config = json.load(f)
             logger.info(f"Loaded config from {config_path}")
             # Merge with defaults (config overrides defaults)
-            return {**defaults, **config}
+            merged = {**defaults, **config}
+
+            # Clamp speech_playback_rate to [0.7, 1.5]
+            rate = merged.get("speech_playback_rate")
+            if isinstance(rate, (int, float)):
+                merged["speech_playback_rate"] = max(0.7, min(1.5, rate))
+            else:
+                if rate is not None:
+                    logger.warning(f"speech_playback_rate is not a number: {rate}. Using default 1.0")
+                merged["speech_playback_rate"] = 1.0
+
+            return merged
     except json.JSONDecodeError as e:
         logger.warning(f"Invalid JSON in {config_path}: {e}. Using defaults.")
         return defaults

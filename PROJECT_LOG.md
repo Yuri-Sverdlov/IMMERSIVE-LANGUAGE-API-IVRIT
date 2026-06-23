@@ -227,3 +227,16 @@
 - Вывод: Gemini Live API **не экспонирует** `speaking_rate` в SpeechConfig; `silence_duration_ms` — это VAD, не темп речи.
 - Решение: поле `speech_playback_rate` в `immergo.config.json`, реализация **на клиенте** в `AudioPlayer` / playback worklet.
 - Зафиксировано в `CONTEXT.md` раздел «План TASK-008».
+
+## 2026-06-23 — Приёмка TASK-008 (speech_playback_rate)
+- Кто: архитектор (чат), отчёт кодера (терминал).
+- Сделано: `speech_playback_rate` в `immergo.config.json`; clamp в `config_utils.py`;
+  поле в `GET /api/config`; resample в `playback.worklet.js`; `AudioPlayer.setPlaybackRate()`;
+  wiring в `view-chat.js`; строка в `QUICK_START.md`.
+- Проверено независимо:
+  - grep по ключевым файлам — все точки на месте.
+  - `npm run build` — OK (134ms).
+  - `load_immergo_config()` — `rate= 1.0`.
+- Вердикт: **ПРИНЯТО**. Голосовой тест 0.7/1.5 — на пользователя. Коммита нет (не было git-задания).
+- Архив: `tasks/done/008-speech-playback-rate/`.
+- Дальше: TASK-009 или git-задание на commit 008.

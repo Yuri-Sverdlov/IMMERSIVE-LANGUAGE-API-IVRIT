@@ -409,6 +409,7 @@ export class AudioPlayer {
     this.gainNode = null;
     this.isInitialized = false;
     this.volume = 1.0;
+    this.playbackRate = 1.0;
     this.sampleRate = 24000; // Gemini outputs at 24kHz
   }
 
@@ -448,6 +449,14 @@ export class AudioPlayer {
       // Connect nodes
       this.workletNode.connect(this.gainNode);
       this.gainNode.connect(this.audioContext.destination);
+
+      // Apply playback rate if it was set before init
+      if (this.playbackRate !== 1.0) {
+        this.workletNode.port.postMessage({
+          type: "setPlaybackRate",
+          rate: this.playbackRate
+        });
+      }
 
       this.isInitialized = true;
       console.log("🔊 Audio player initialized");
@@ -518,6 +527,22 @@ export class AudioPlayer {
     this.volume = Math.max(0, Math.min(1, volume));
     if (this.gainNode) {
       this.gainNode.gain.value = this.volume;
+    }
+  }
+
+  /**
+   * Set playback rate (0.7 to 1.5)
+   */
+  setPlaybackRate(rate) {
+    // Clamp to valid range
+    this.playbackRate = Math.max(0.7, Math.min(1.5, rate));
+
+    // Send to worklet if already initialized
+    if (this.workletNode) {
+      this.workletNode.port.postMessage({
+        type: "setPlaybackRate",
+        rate: this.playbackRate
+      });
     }
   }
 
