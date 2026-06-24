@@ -320,5 +320,5 @@
 
 ## 2026-06-24 — Git push сессии (012 + фиксы)
 - Кто: архитектор/кодер по команде пользователя.
-- Commit: session control panel, languagePrefs, docs, архивы 011/012.
+- Commit: `ce62474` = `origin/main` — session control panel, languagePrefs, docs, архивы 011/012.
 - Исключено: `app/.env.backup`, `new`, `tasks/done/007-quick-start-git/`.

@@ -50,7 +50,7 @@
 
 ## Текущий фокус
 
-**Фаза 1 слияния завершена.** Оба ПК на **`origin/main`** (`e4339e7`, 2026-06-24).
+**Фаза 1 слияния завершена.** Оба ПК на **`origin/main`** (`ce62474`, 2026-06-24).
 
 - Локально: иврит/русский, `start-immergo.bat`, `GEMINI_API_KEY`, `[TOKENS]`
 - Config: `app/immergo.config.json` (языки, 7 мин, VAD, `speech_playback_rate` 0,7–1,5)
