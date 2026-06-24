@@ -19,6 +19,11 @@ import './view-missions.js';
 import './view-chat.js';
 import './view-summary.js';
 import './text-cycler.js';
+import {
+    DEFAULT_NATIVE_LABEL,
+    DEFAULT_TARGET_LABEL,
+    readStoredLanguageLabels,
+} from '../lib/languagePrefs.js';
 
 class AppRoot extends HTMLElement {
     constructor() {
@@ -258,13 +263,21 @@ class AppRoot extends HTMLElement {
             case 'missions':
                 currentView = document.createElement('view-missions');
                 break;
-            case 'chat':
+            case 'chat': {
+                const stored = readStoredLanguageLabels();
                 currentView = document.createElement('view-chat');
-                currentView.mission = this.state.selectedMission;
-                currentView.language = this.state.selectedLanguage;
-                currentView.fromLanguage = this.state.selectedFromLanguage;
+                currentView.language =
+                    this.state.selectedLanguage ||
+                    stored.target ||
+                    DEFAULT_TARGET_LABEL;
+                currentView.fromLanguage =
+                    this.state.selectedFromLanguage ||
+                    stored.native ||
+                    DEFAULT_NATIVE_LABEL;
                 currentView.mode = this.state.selectedMode;
+                currentView.mission = this.state.selectedMission;
                 break;
+            }
             case 'summary':
                 currentView = document.createElement('view-summary');
                 currentView.result = this.state.sessionResult;

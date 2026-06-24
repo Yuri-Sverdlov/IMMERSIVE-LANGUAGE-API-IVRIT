@@ -15,6 +15,12 @@
  */
 
 import missionsData from '../data/missions.json';
+import {
+  ensureLanguageDefaults,
+  getEffectiveLanguageLabels,
+  restoreLanguageSelects,
+  writeStoredLanguageLabels,
+} from '../lib/languagePrefs.js';
 
 class ViewMissions extends HTMLElement {
   connectedCallback() {
@@ -268,10 +274,17 @@ class ViewMissions extends HTMLElement {
       </div>
     `;
 
-    this.renderMissions();
+    const fromSelect = this.querySelector('#from-lang');
+    const toSelect = this.querySelector('#to-lang');
 
-    // Restore language preference (async to load from config if needed)
-    this.initializeLanguageDefaults();
+    // Sync: localStorage or RU/HE defaults (never leave English/English)
+    restoreLanguageSelects(fromSelect, toSelect);
+
+    const listContainer = this.querySelector('.missions-list');
+    listContainer.innerHTML =
+      '<p style="text-align:center;opacity:0.6;padding:2rem;">...</p>';
+
+    this._bootLanguages(fromSelect, toSelect);
 
 
     // Mode Logic
@@ -318,15 +331,20 @@ class ViewMissions extends HTMLElement {
 
     // Add change listeners to persist immediately
     fromSelect.addEventListener('change', () => {
-      localStorage.setItem('immergo_from_language', fromSelect.value);
+      writeStoredLanguageLabels(fromSelect.value, toSelect.value);
     });
 
     toSelect.addEventListener('change', () => {
-      localStorage.setItem('immergo_language', toSelect.value);
+      writeStoredLanguageLabels(fromSelect.value, toSelect.value);
     });
   }
 
-  renderMissions() {
+  async _bootLanguages(fromSelect, toSelect) {
+    await ensureLanguageDefaults(fromSelect, toSelect);
+    this.renderMissions(fromSelect, toSelect);
+  }
+
+  renderMissions(fromSelect, toSelect) {
     const missions = missionsData;
     const listContainer = this.querySelector('.missions-list');
 
@@ -380,19 +398,12 @@ class ViewMissions extends HTMLElement {
       `;
 
       card.addEventListener('click', () => {
-        const toSelect = this.querySelector('#to-lang');
-        const fromSelect = this.querySelector('#from-lang');
+        const { native: selectedFromLang, target: selectedToLang } =
+          getEffectiveLanguageLabels(fromSelect, toSelect);
 
-        const selectedToLang = toSelect.value;
-        const selectedFromLang = fromSelect.value;
+        writeStoredLanguageLabels(selectedFromLang, selectedToLang);
 
-        // currentMode is defined in the closure above? No, it's local to connectedCallback.
-        // We need to re-read it or make it accessible. Let's re-read from localStorage for simplicity and safety
         const selectedMode = localStorage.getItem('immergo_mode') || 'immergo_immersive';
-
-        // Save preference
-        localStorage.setItem('immergo_language', selectedToLang);
-        localStorage.setItem('immergo_from_language', selectedFromLang);
 
         this.dispatchEvent(new CustomEvent('navigate', {
           bubbles: true,
@@ -408,61 +419,6 @@ class ViewMissions extends HTMLElement {
 
       listContainer.appendChild(card);
     });
-  }
-
-  async initializeLanguageDefaults() {
-    let savedLang = localStorage.getItem('immergo_language');
-    let savedFromLang = localStorage.getItem('immergo_from_language');
-
-    // Migrate stale upstream default (French) from early visits / old localStorage
-    if (savedLang && savedLang.includes('French')) {
-      localStorage.removeItem('immergo_language');
-      savedLang = null;
-    }
-
-    const toSelect = this.querySelector('#to-lang');
-    const fromSelect = this.querySelector('#from-lang');
-
-    // If no localStorage, fetch defaults from config
-    if (!savedLang || !savedFromLang) {
-      try {
-        const response = await fetch('/api/config');
-        const config = await response.json();
-
-        if (!savedLang) {
-          const options = Array.from(toSelect.options);
-          const targetOption = options.find(o => o.text.includes(config.target_language));
-          if (targetOption) toSelect.value = targetOption.text;
-          localStorage.setItem('immergo_language', toSelect.value);
-        }
-
-        if (!savedFromLang) {
-          const options = Array.from(fromSelect.options);
-          const nativeOption = options.find(o => o.text.includes(config.native_language));
-          if (nativeOption) fromSelect.value = nativeOption.text;
-          localStorage.setItem('immergo_from_language', fromSelect.value);
-        }
-      } catch (err) {
-        console.error('Failed to fetch config, using hardcoded defaults:', err);
-        // Fallback to hardcoded defaults
-        if (!savedLang) {
-          const options = Array.from(toSelect.options);
-          const hebrewOption = options.find(o => o.text.includes('Hebrew'));
-          if (hebrewOption) toSelect.value = hebrewOption.text;
-          localStorage.setItem('immergo_language', toSelect.value);
-        }
-        if (!savedFromLang) {
-          const options = Array.from(fromSelect.options);
-          const russianOption = options.find(o => o.text.includes('Russian'));
-          if (russianOption) fromSelect.value = russianOption.text;
-          localStorage.setItem('immergo_from_language', fromSelect.value);
-        }
-      }
-    } else {
-      // localStorage exists, use it
-      toSelect.value = savedLang;
-      fromSelect.value = savedFromLang;
-    }
   }
 }
 

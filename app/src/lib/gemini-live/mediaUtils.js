@@ -29,6 +29,7 @@ export class AudioStreamer {
     this.audioWorklet = null;
     this.mediaStream = null;
     this.isStreaming = false;
+    this.muted = false;
     this.sampleRate = 16000; // Gemini requires 16kHz
   }
 
@@ -78,6 +79,7 @@ export class AudioStreamer {
         if (!this.isStreaming) return;
 
         if (event.data.type === "audio") {
+          if (this.muted) return;
           const inputData = event.data.data;
           const pcmData = this.convertToPCM16(inputData);
 
@@ -101,6 +103,13 @@ export class AudioStreamer {
       console.error("Failed to start audio streaming:", error);
       throw error;
     }
+  }
+
+  /**
+   * Mute or unmute microphone (keeps stream alive, just stops sending PCM)
+   */
+  setMuted(muted) {
+    this.muted = muted;
   }
 
   /**
@@ -531,11 +540,11 @@ export class AudioPlayer {
   }
 
   /**
-   * Set playback rate (0.7 to 1.5)
+   * Set playback rate (0.6 to 1.5)
    */
   setPlaybackRate(rate) {
     // Clamp to valid range
-    this.playbackRate = Math.max(0.7, Math.min(1.5, rate));
+    this.playbackRate = Math.max(0.6, Math.min(1.5, rate));
 
     // Send to worklet if already initialized
     if (this.workletNode) {

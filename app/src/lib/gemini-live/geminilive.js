@@ -212,6 +212,18 @@ export class GeminiLiveAPI {
     this.automaticActivityDetection.silence_duration_ms = durationMs;
   }
 
+  setAutomaticActivityDetectionDisabled(disabled) {
+    this.automaticActivityDetection.disabled = disabled;
+    // Attempt mid-session VAD update (supported in some Live API versions)
+    if (this.connected) {
+      this.sendMessage({
+        realtime_input: {
+          automatic_activity_detection: { disabled: disabled }
+        }
+      });
+    }
+  }
+
   setProactivity(proactivity) {
     console.log("setting proactivity: ", proactivity);
     this.proactivity = proactivity;

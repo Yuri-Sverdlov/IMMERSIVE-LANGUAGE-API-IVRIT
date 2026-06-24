@@ -71,7 +71,7 @@ def load_immergo_config():
             # Clamp speech_playback_rate to [0.7, 1.5]
             rate = merged.get("speech_playback_rate")
             if isinstance(rate, (int, float)):
-                merged["speech_playback_rate"] = max(0.7, min(1.5, rate))
+                merged["speech_playback_rate"] = max(0.6, min(1.5, rate))
             else:
                 if rate is not None:
                     logger.warning(f"speech_playback_rate is not a number: {rate}. Using default 1.0")

@@ -34,8 +34,8 @@ class PCMProcessor extends AudioWorkletProcessor {
         // Add audio data to the queue
         this.audioQueue.push(event.data);
       } else if (event.data && event.data.type === "setPlaybackRate") {
-        // Set playback rate
-        this.playbackRate = event.data.rate;
+        // Set playback rate, clamped to [0.6, 1.5]
+        this.playbackRate = Math.max(0.6, Math.min(1.5, event.data.rate));
       }
     };
   }

@@ -22,6 +22,11 @@ import {
   FunctionCallDefinition,
 } from "../lib/gemini-live/geminilive.js";
 import { AudioStreamer, AudioPlayer } from "../lib/gemini-live/mediaUtils.js";
+import {
+  DEFAULT_NATIVE_LABEL,
+  DEFAULT_TARGET_LABEL,
+  readStoredLanguageLabels,
+} from "../lib/languagePrefs.js";
 
 class ViewChat extends HTMLElement {
   constructor() {
@@ -36,10 +41,12 @@ class ViewChat extends HTMLElement {
 
   set language(value) {
     this._language = value;
+    if (this._mission) this.render();
   }
 
   set fromLanguage(value) {
     this._fromLanguage = value;
+    if (this._mission) this.render();
   }
 
   set mode(value) {
@@ -57,6 +64,22 @@ class ViewChat extends HTMLElement {
 
   render() {
     if (!this._mission) return; // Wait for mission prop
+
+    // Init playback rate from localStorage (persists across renders)
+    if (this._playbackRate === undefined) {
+      const _stored = parseFloat(localStorage.getItem('immergo_playback_rate'));
+      this._playbackRate = (_stored && !isNaN(_stored)) ? Math.max(0.6, Math.min(1.5, _stored)) : 1.0;
+    }
+    this._micMuted = false; // always reset mic on new mission screen
+    const fmtRate = (r) => {
+      let s = (Math.round(r * 1000) / 1000).toFixed(3).replace(/\.?0+$/, '');
+      return s.replace('.', ',');
+    };
+    const storedLangs = readStoredLanguageLabels();
+    const displayFrom =
+      this._fromLanguage || storedLangs.native || DEFAULT_NATIVE_LABEL;
+    const displayTo =
+      this._language || storedLangs.target || DEFAULT_TARGET_LABEL;
 
     this.innerHTML = `
 
@@ -104,9 +127,9 @@ class ViewChat extends HTMLElement {
             margin-right: auto;
             border: 1px solid rgba(0,0,0,0.05);
           ">
-            <span>${this._fromLanguage}</span>
+            <span>${displayFrom}</span>
             <span style="opacity: 0.3; font-weight: normal;">➔</span>
-            <span style="color: var(--color-accent-primary);">${this._language}</span>
+            <span style="color: var(--color-accent-primary);">${displayTo}</span>
           </div>
 
           <div style="
@@ -141,6 +164,21 @@ class ViewChat extends HTMLElement {
           `
         : ""
       }
+        </div>
+
+        <!-- Session Control Panel -->
+        <div class="session-control-panel">
+          <div class="scp-group">
+            <span class="scp-label">Скорость диалога</span>
+            <span id="scp-rate-display">${fmtRate(this._playbackRate)}</span>
+            <button id="scp-rate-up" class="scp-step-btn" title="Faster">&#9650;</button>
+            <button id="scp-rate-down" class="scp-step-btn" title="Slower">&#9660;</button>
+          </div>
+          <div class="scp-divider"></div>
+          <div id="scp-mic-toggle" class="scp-group scp-mic-group scp-disabled">
+            <span id="scp-mic-dot" class="scp-mic-dot scp-mic-on">&#9679;</span>
+            <span id="scp-mic-label">Микрофон: включен</span>
+          </div>
         </div>
 
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: ${this._mode === "immergo_teacher" ? "space-between" : "center"
@@ -219,6 +257,71 @@ class ViewChat extends HTMLElement {
             flex-direction: row !important;
             gap: 12px;
           }
+
+          .session-control-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: var(--radius-full);
+            padding: 8px 18px;
+            width: fit-content;
+            margin: var(--spacing-md) auto 0;
+            font-size: 0.9rem;
+          }
+          .scp-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .scp-label {
+            font-weight: 600;
+            opacity: 0.8;
+          }
+          #scp-rate-display {
+            font-weight: 700;
+            min-width: 2.5ch;
+            text-align: center;
+          }
+          .scp-step-btn {
+            background: transparent;
+            border: 1px solid rgba(0,0,0,0.15);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            line-height: 1;
+            transition: background 0.15s;
+          }
+          .scp-step-btn:hover {
+            background: rgba(0,0,0,0.08);
+          }
+          .scp-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(0,0,0,0.12);
+            flex-shrink: 0;
+          }
+          .scp-mic-group {
+            cursor: pointer;
+            user-select: none;
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            transition: background 0.15s;
+          }
+          .scp-mic-group:hover:not(.scp-disabled) {
+            background: rgba(0,0,0,0.08);
+          }
+          .scp-mic-group.scp-disabled {
+            opacity: 0.4;
+            cursor: default;
+          }
+          .scp-mic-dot { font-size: 0.75rem; }
+          .scp-mic-dot.scp-mic-on  { color: #f44336; }
+          .scp-mic-dot.scp-mic-off { color: #9e9e9e; }
         </style>
 
         <div style="margin-bottom: var(--spacing-xxl); display: flex; flex-direction: column; gap: var(--spacing-lg); align-items: center;">
@@ -297,6 +400,58 @@ class ViewChat extends HTMLElement {
       rateLimitDialog.style.display = "none";
     });
 
+    // Session Control Panel
+    const scpRateDisplay = this.querySelector('#scp-rate-display');
+    const scpRateUp     = this.querySelector('#scp-rate-up');
+    const scpRateDown   = this.querySelector('#scp-rate-down');
+    const scpMicToggle  = this.querySelector('#scp-mic-toggle');
+    const scpMicDot     = this.querySelector('#scp-mic-dot');
+    const scpMicLabel   = this.querySelector('#scp-mic-label');
+
+    const RATE_STEP = 0.025, RATE_MIN = 0.6, RATE_MAX = 1.5;
+
+    const snapRate = (rate) => {
+      const steps = Math.round((rate - RATE_MIN) / RATE_STEP);
+      const maxSteps = Math.round((RATE_MAX - RATE_MIN) / RATE_STEP);
+      const clamped = Math.max(0, Math.min(maxSteps, steps));
+      return Math.round((RATE_MIN + clamped * RATE_STEP) * 1000) / 1000;
+    };
+
+    const applyRate = (newRate) => {
+      this._playbackRate = snapRate(Math.max(RATE_MIN, Math.min(RATE_MAX, newRate)));
+      scpRateDisplay.textContent = fmtRate(this._playbackRate);
+      localStorage.setItem('immergo_playback_rate', this._playbackRate);
+      if (this.audioPlayer) this.audioPlayer.setPlaybackRate(this._playbackRate);
+    };
+
+    scpRateUp.addEventListener('click',   () => applyRate(this._playbackRate + RATE_STEP));
+    scpRateDown.addEventListener('click', () => applyRate(this._playbackRate - RATE_STEP));
+
+    const setMicMuted = (muted) => {
+      this._micMuted = muted;
+      if (muted) {
+        scpMicDot.className   = 'scp-mic-dot scp-mic-off';
+        scpMicLabel.textContent = 'Микрофон: отключен';
+        if (this.audioStreamer) this.audioStreamer.setMuted(true);
+        if (this.client) this.client.setAutomaticActivityDetectionDisabled(true);
+      } else {
+        scpMicDot.className   = 'scp-mic-dot scp-mic-on';
+        scpMicLabel.textContent = 'Микрофон: включен';
+        if (this.audioStreamer) this.audioStreamer.setMuted(false);
+        if (this.client) {
+          this.client.setAutomaticActivityDetectionDisabled(false);
+          if (this._savedSilenceDurationMs) {
+            this.client.setSilenceDurationMs(this._savedSilenceDurationMs);
+          }
+        }
+      }
+    };
+
+    scpMicToggle.addEventListener('click', () => {
+      if (scpMicToggle.classList.contains('scp-disabled')) return;
+      setMicMuted(!this._micMuted);
+    });
+
     // Helper to perform navigation
     const doEndSession = () => {
       // Cleanup Gemini session
@@ -342,7 +497,7 @@ class ViewChat extends HTMLElement {
       this.dispatchEvent(
         new CustomEvent("navigate", {
           bubbles: true,
-          detail: { view: "mission-selector" },
+          detail: { view: "missions" },
         })
       );
     });
@@ -508,12 +663,11 @@ class ViewChat extends HTMLElement {
 
         try {
           // 0. Configure System Instructions
-          const language = this._language
-            || localStorage.getItem('immergo_language')
-            || "\uD83C\uDDEE\uD83C\uDDF1 Hebrew";
-          const fromLanguage = this._fromLanguage
-            || localStorage.getItem('immergo_from_language')
-            || "\uD83C\uDDF7\uD83C\uDDFA Russian";
+          const stored = readStoredLanguageLabels();
+          const language =
+            this._language || stored.target || DEFAULT_TARGET_LABEL;
+          const fromLanguage =
+            this._fromLanguage || stored.native || DEFAULT_NATIVE_LABEL;
           const mode = this._mode || "immergo_immersive";
           const missionTitle = this._mission
             ? this._mission.title
@@ -607,13 +761,18 @@ When the user has successfully achieved the mission objective declared in the sc
             const configResponse = await fetch('/api/config');
             const config = await configResponse.json();
             if (config.silence_duration_ms) {
+              this._savedSilenceDurationMs = config.silence_duration_ms;
               this.client.setSilenceDurationMs(config.silence_duration_ms);
             }
-            if (config.speech_playback_rate) {
-              this.audioPlayer.setPlaybackRate(config.speech_playback_rate);
+            // localStorage wins over config for rate; use config only as fallback
+            if (!localStorage.getItem('immergo_playback_rate') && config.speech_playback_rate) {
+              this._playbackRate = config.speech_playback_rate;
+              scpRateDisplay.textContent = fmtRate(this._playbackRate);
             }
+            this.audioPlayer.setPlaybackRate(this._playbackRate);
           } catch (err) {
             console.error("Failed to fetch config, using defaults:", err);
+            this.audioPlayer.setPlaybackRate(this._playbackRate);
           }
 
           // Execute Recaptcha
@@ -667,6 +826,7 @@ When the user has successfully achieved the mission objective declared in the sc
           console.log("✨ [App] Session active!");
           statusEl.textContent = "Connected and ready to speak";
           statusEl.style.color = "#4CAF50"; // Success green
+          scpMicToggle.classList.remove('scp-disabled');
 
           // Play start sound
           const startSound = new Audio("/start-bell.mp3");
@@ -685,6 +845,8 @@ When the user has successfully achieved the mission objective declared in the sc
               <span style="font-size: 1.3rem; font-weight: 800; margin-bottom: 2px; letter-spacing: 0.02em;">Start Mission</span>
               <span style="font-size: 0.85rem; opacity: 0.9; font-style: italic;">You start the conversation!</span>
           `;
+          scpMicToggle.classList.add('scp-disabled');
+          setMicMuted(false);
 
           userViz.disconnect();
           modelViz.disconnect();
