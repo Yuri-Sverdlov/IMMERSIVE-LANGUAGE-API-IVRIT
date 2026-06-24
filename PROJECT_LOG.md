@@ -240,3 +240,27 @@
 - Вердикт: **ПРИНЯТО**. Голосовой тест 0.7/1.5 — на пользователя. Коммита нет (не было git-задания).
 - Архив: `tasks/done/008-speech-playback-rate/`.
 - Дальше: TASK-009 или git-задание на commit 008.
+
+## 2026-06-24 — Приёмка TASK-009 (sync ПК1 с GitHub)
+- Кто: архитектор (чат), отчёт кодера (терминал).
+- Задание: pull с `origin/main` (компьютер 2 -> этот ПК), сохранить локальный `app/.env`.
+- Проверено независимо:
+  - `git rev-parse HEAD` = `origin/main` = `b642136e3a0216a0e7c3ea6cd8ef99ac844f4d92`.
+  - `app/immergo.config.json` — RU/HE, 420s, 2000ms, rate 1.0.
+  - `git ls-files` — только `app/.env.example`.
+  - Отчёт: fast-forward 42c9ee4 -> b642136, конфликтов нет, `/api/status` 200.
+- Вердикт: **ПРИНЯТО**. Голосовой тест на ПК1 — на пользователя.
+- Архив: `tasks/done/009-sync-from-github/`.
+- Дальше: шаблон квеста (`mission.template.json` + `HOW-TO-ADD-QUEST.md`).
+
+## 2026-06-24 — Приёмка TASK-010 (шаблон квеста)
+- Кто: архитектор (чат), отчёт кодера (терминал).
+- Сделано: `app/src/data/mission.template.json`, `docs/HOW-TO-ADD-QUEST.md`, ссылка в `QUICK_START.md`.
+- Проверено независимо:
+  - шаблон — валидный JSON, 5 полей;
+  - HOW-TO — все 7 разделов, пример «шашки», difficulty косметический;
+  - `npm run build` — OK (227ms);
+  - `missions.json` не тронут.
+- Вердикт: **ПРИНЯТО**. Тест добавления квеста — на пользователя.
+- Архив: `tasks/done/010-quest-template/`.
+- Дальше: git push (010 на GitHub) или Cloud Run redeploy.

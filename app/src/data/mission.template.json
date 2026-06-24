@@ -1,0 +1,7 @@
+{
+  "id": 10,
+  "title": "Your mission title",
+  "difficulty": "Easy",
+  "desc": "What the learner should achieve in this scenario.",
+  "target_role": "Who the AI plays, e.g. Friendly Shopkeeper"
+}
