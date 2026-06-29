@@ -40,6 +40,10 @@ COPY --from=frontend-builder /app/dist ./dist
 
 # Copy the server code
 COPY server ./server
+
+# Copy immergo config for runtime
+COPY immergo.config.json .
+
 # Copy root level scripts/configs if needed (like .env example or deployment scripts, though usually not needed for runtime)
 # We might need to copy specific files if the server code relies on relative paths outside 'server/'
 # The main.py uses "dist" relative to CWD.
