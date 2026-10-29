@@ -6,7 +6,9 @@
 ## Проект
 
 - **Название:** IMMERSIVE-LANGUAGE-API
-- **Путь (этот ПК):** `G:\___Planning_Life_Sphere\IVRIT\IMMERSIVE-LANGUAGE-API`
+- **Путь:** ПК1 — `G:\_MY-PROGRAMMING_4\IMMERSIVE-LANGUAGE-API-IVRIT` (клон с GitHub,
+  с 2026-10-29). Прежний путь `G:\___Planning_Life_Sphere\IVRIT\IMMERSIVE-LANGUAGE-API`
+  больше не существует.
 - **Суть:** Иммерсивное изучение языка через голосовой роле-плей с ИИ (Google Gemini Live API).
   Берём готовый репозиторий [ZackAkil/immersive-language-learning-with-live-api](https://github.com/ZackAkil/immersive-language-learning-with-live-api)
   (приложение "Immergo") и настраиваем под наш кейс.
